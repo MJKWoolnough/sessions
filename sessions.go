@@ -69,7 +69,11 @@ func (c *CookieStore) Get(r *http.Request) []byte {
 }
 
 func (c *CookieStore) Set(w http.ResponseWriter, data []byte) {
-	c.store.SetData(w, c.codec.Encode(data))
+	if len(data) == 0 {
+		c.store.RemoveData(w)
+	} else {
+		c.store.SetData(w, c.codec.Encode(data))
+	}
 }
 
 /*
