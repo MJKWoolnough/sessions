@@ -77,7 +77,6 @@ func TestSecureEncode(t *testing.T) {
 		}
 		d := c.Encode(test.PlainText)
 		if d != test.CipherText {
-			fmt.Println(d)
 			t.Errorf("test %d: got incorrect cipher text", n+1)
 			continue
 		}
