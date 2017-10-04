@@ -8,6 +8,7 @@ import (
 
 type Store interface {
 	Get(*http.Request) []byte
+	Set(http.ResponseWriter, []byte)
 }
 
 type store struct {
@@ -63,6 +64,15 @@ func NewCookieStore(encKey []byte, opts ...optFunc) (*CookieStore, error) {
 		return nil, err
 	}
 	return c, nil
+}
+
+func (c *CookieStore) Get(r *http.Request) []byte {
+	data, _ := c.codec.Decode(c.store.GetData(r))
+	return data
+}
+
+func (c *CookieStore) Set(w http.ResponseWriter, data []byte) {
+	c.store.SetData(w, c.codec.Encode(data))
 }
 
 type FSStore struct {
