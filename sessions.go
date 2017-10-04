@@ -43,8 +43,6 @@ func (s *store) RemoveData(w http.ResponseWriter) {
 	w.Header().Add("Set-Cookie", s.cookie.String())
 }
 
-type optFunc func(s *store)
-
 func (s *store) Init(opts ...optFunc) {
 	s.cookie.Name = "session"
 	for _, opt := range opts {
