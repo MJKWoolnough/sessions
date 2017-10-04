@@ -7,37 +7,7 @@ import (
 )
 
 type Store interface {
-	Get(*http.Request) Session
-}
-
-type Session interface {
-	Load(k interface{}) (v interface{}, ok bool)
-	Store(k, v interface{})
-	Delete(k interface{})
-}
-
-type session struct {
-	mu   sync.RWMutex
-	data map[interface{}]interface{}
-}
-
-func (s *session) Load(k interface{}) (interface{}, bool) {
-	s.mu.RLock()
-	v, ok := s.data[k]
-	s.mu.RUnlock()
-	return v, ok
-}
-
-func (s *session) Store(k, v interface{}) {
-	s.mu.Lock()
-	s.data[k] = v
-	s.mu.Unlock()
-}
-
-func (s *session) Delete(k interface{}) {
-	s.mu.Lock()
-	delete(s.data, k)
-	s.mu.Unlock()
+	Get(*http.Request) []byte
 }
 
 type store struct {
@@ -45,7 +15,7 @@ type store struct {
 	expires time.Duration
 }
 
-func (s *store) getData(r *http.Request) string {
+func (s *store) GetData(r *http.Request) string {
 	cookies := r.Cookies()
 	for _, cookie := range cookies {
 		if cookie.Name == s.cookie.Name &&
@@ -59,27 +29,40 @@ func (s *store) getData(r *http.Request) string {
 	return ""
 }
 
-func (s *store) setData(w http.ResponseWriter, data string) {
+func (s *store) SetData(w http.ResponseWriter, data string) {
 	cookie := s.cookie
 	if s.expires > 0 {
 		cookie.Expires = time.Now().Add(s.expires)
 	}
+	cookie.Value = data
 	w.Header().Add("Set-Cookie", cookie.String())
+}
+
+func (s *store) RemoveData(w http.ResponseWriter) {
+	w.Header().Add("Set-Cookie", s.cookie.String())
 }
 
 type optFunc func(s *store)
 
-func newStore(os ...optFunc) *store {
-	s := new(store)
+func (s *store) Init(opts ...optFunc) {
 	s.cookie.Name = "session"
-	for _, o := range os {
-		o(s)
+	for _, opt := range opts {
+		opt(s)
 	}
-	return s
 }
 
 type CookieStore struct {
-	store
+	store store
+	codec codec
+}
+
+func NewCookieStore(encKey []byte, opts ...optFunc) (*CookieStore, error) {
+	c := new(CookieStore)
+	c.store.Init(opts...)
+	if err := c.codec.Init(encKey, c.store.expires); err != nil {
+		return nil, err
+	}
+	return c, nil
 }
 
 type FSStore struct {
