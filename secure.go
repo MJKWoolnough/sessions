@@ -19,13 +19,13 @@ type codec struct {
 	maxAge   time.Duration
 }
 
-func newCodec(key []byte, maxAge time.Duration) (*codec, error) {
+func (c *codec) Init(key []byte, maxAge time.Duration) error {
 	if l := len(key); l != 16 && l != 24 && l != 32 {
-		return nil, errInvalidAES
+		return errInvalidAES
 	}
 	a := make([]byte, len(key))
 	copy(a, key)
-	return &codec{
+	*c = codec{
 		aeadPool: sync.Pool{
 			New: func() interface{} {
 				block, _ := aes.NewCipher(a)
@@ -34,7 +34,8 @@ func newCodec(key []byte, maxAge time.Duration) (*codec, error) {
 			},
 		},
 		maxAge: maxAge,
-	}, nil
+	}
+	return nil
 }
 
 func (c *codec) Encode(data []byte) string {
@@ -62,8 +63,10 @@ func (c *codec) Decode(data string) ([]byte, error) {
 
 	timestamp := time.Unix(int64(binary.BigEndian.Uint64(cipherText[4:12])), 0)
 
-	if t := timeNow().Sub(timestamp); t > c.maxAge || t < 0 {
-		return nil, errExpired
+	if c.maxAge > 0 {
+		if t := timeNow().Sub(timestamp); t > c.maxAge || t < 0 {
+			return nil, errExpired
+		}
 	}
 
 	a := c.aeadPool.Get().(cipher.AEAD)

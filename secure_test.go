@@ -58,12 +58,13 @@ func TestSecureEncode(t *testing.T) {
 			DecodeTime: tn.Add(time.Second),
 		},
 	}
+	c := new(codec)
+	var ts [2]time.Time
 	for n, test := range tests {
-		times = []time.Time{
-			test.EncodeTime,
-			test.DecodeTime,
-		}
-		c, err := newCodec(test.Key, test.Timeout)
+		ts[0] = test.EncodeTime
+		ts[1] = test.DecodeTime
+		times = ts[:]
+		err := c.Init(test.Key, test.Timeout)
 		if err != nil {
 			if test.CodecError == nil {
 				t.Errorf("test %d: unexpected codec error: %s", n+1, err)
