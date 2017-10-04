@@ -2,7 +2,6 @@ package session
 
 import (
 	"net/http"
-	"sync"
 	"time"
 )
 
@@ -45,6 +44,7 @@ func (s *store) RemoveData(w http.ResponseWriter) {
 
 func (s *store) Init(opts ...optFunc) {
 	s.cookie.Name = "session"
+	s.cookie.Expires = time.Unix(0, 0)
 	for _, opt := range opts {
 		opt(s)
 	}
@@ -73,6 +73,7 @@ func (c *CookieStore) Set(w http.ResponseWriter, data []byte) {
 	c.store.SetData(w, c.codec.Encode(data))
 }
 
+/*
 type FSStore struct {
 	store
 	path string
@@ -82,3 +83,4 @@ type MemStore struct {
 	store
 	data sync.Map
 }
+*/
