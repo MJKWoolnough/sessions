@@ -19,10 +19,6 @@ type codec struct {
 	maxAge   time.Duration
 }
 
-type gcmAble interface {
-	NewGCM(int) (cipher.AEAD, error)
-}
-
 func newCodec(key []byte, maxAge time.Duration) (*codec, error) {
 	if l := len(key); l != 16 && l != 24 && l != 32 {
 		return nil, errInvalidAES
@@ -33,7 +29,7 @@ func newCodec(key []byte, maxAge time.Duration) (*codec, error) {
 		aeadPool: sync.Pool{
 			New: func() interface{} {
 				block, _ := aes.NewCipher(a)
-				aead, _ := block.(gcmAble).NewGCM(nonceSize)
+				aead, _ := cipher.NewGCMWithNonceSize(block, nonceSize)
 				return aead
 			},
 		},
