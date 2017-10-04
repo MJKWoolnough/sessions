@@ -19,6 +19,10 @@ type codec struct {
 	maxAge   time.Duration
 }
 
+type gcmAble interface {
+	NewGCM(int) (cipher.AEAD, error)
+}
+
 func newCodec(key []byte, maxAge time.Duration) (*codec, error) {
 	if l := len(key); l != 16 && l != 24 && l != 32 {
 		return nil, errInvalidAES
@@ -29,9 +33,7 @@ func newCodec(key []byte, maxAge time.Duration) (*codec, error) {
 		aeadPool: sync.Pool{
 			New: func() interface{} {
 				block, _ := aes.NewCipher(a)
-				aead, _ := block.(interface {
-					NewGCM(int) (cipher.AEAD, error)
-				}).NewGCM(nonceSize)
+				aead, _ := block.(gcmAble).NewGCM(nonceSize)
 				return aead
 			},
 		},
@@ -47,7 +49,7 @@ func (c *codec) Encode(data []byte) string {
 	binary.LittleEndian.PutUint64(dst, uint64(t.Nanosecond())) // last four bytes are overriden
 	binary.BigEndian.PutUint64(dst[4:], uint64(t.Unix()))
 
-	dst = a.Seal(dst, dst[:nonceSize], data, nil)
+	dst = a.Seal(dst, dst, data, nil)
 
 	c.aeadPool.Put(a)
 
@@ -74,11 +76,11 @@ func (c *codec) Decode(data string) ([]byte, error) {
 
 	buf, err = a.Open(buf, cipherText[:12], cipherText[12:], nil)
 
+	c.aeadPool.Put(a)
+
 	if err != nil {
 		return nil, err
 	}
-
-	c.aeadPool.Put(a)
 
 	return buf, nil
 }
