@@ -1,6 +1,7 @@
 package session
 
 import (
+	"crypto/aes"
 	"crypto/cipher"
 	"encoding/base64"
 	"encoding/binary"
@@ -8,6 +9,8 @@ import (
 	"sync"
 	"time"
 )
+
+var timeNow = time.Now
 
 type codec struct {
 	aeadPool sync.Pool
@@ -23,21 +26,21 @@ func newCodec(key []byte, maxAge time.Duration) (*codec, error) {
 	return &codec{
 		aeadPool: sync.Pool{
 			New: func() interface{} {
-				block, _ := cipher.aes.NewCipher(a)
+				block, _ := aes.NewCipher(a)
 				aead, _ := cipher.NewGCM(block)
 				return aead
 			},
 		},
 		maxAge: maxAge,
-	}
+	}, nil
 }
 
-func (c *codec) Encode(data []byte) (string, error) {
+func (c *codec) Encode(data []byte) string {
 	a := c.aeadPool.Get().(cipher.AEAD)
 
 	dst := make([]byte, 12, 12+len(data)+a.Overhead())
-	binary.BigEndian.PutUint64(dst[4:], uint64(time.Now().UnixNano())) // first four bytes are overriden
-	binary.BigEndian.PutUint64(dst, uint64(time.Now().Unix()))
+	binary.BigEndian.PutUint64(dst[4:], uint64(timeNow().UnixNano())) // first four bytes are overriden
+	binary.BigEndian.PutUint64(dst, uint64(timeNow().Unix()))
 
 	dst = a.Seal(dst, dst[:12], data, nil)
 
@@ -50,21 +53,21 @@ func (c *codec) Decode(data string) ([]byte, error) {
 	cipherText, err := base64.StdEncoding.DecodeString(data)
 	if err != nil {
 		return nil, err
-	} else if len(cipherText < 12) {
+	} else if len(cipherText) < 12 {
 		return nil, errInvalidData
 	}
 
 	timestamp := time.Unix(int64(binary.BigEndian.Uint64(cipherText[:12])), 0)
 
-	if time.Now().Sub(timestamp) > c.maxAge {
+	if timeNow().Sub(timestamp) > c.maxAge {
 		return nil, errExpired
 	}
 
 	a := c.aeadPool.Get().(cipher.AEAD)
 
-	data := make([]byte, 0, len(cipherText))
+	buf := make([]byte, 0, len(cipherText))
 
-	data, err = a.Open(data, cipherText[:12], cipherText[12:], nil)
+	buf, err = a.Open(buf, cipherText[:12], cipherText[12:], nil)
 
 	if err != nil {
 		return nil, err
@@ -72,7 +75,7 @@ func (c *codec) Decode(data string) ([]byte, error) {
 
 	c.aeadPool.Put(a)
 
-	return data, nil
+	return buf, nil
 }
 
 var (

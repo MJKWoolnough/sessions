@@ -48,11 +48,11 @@ type store struct {
 func (s *store) getData(r *http.Request) string {
 	cookies := r.Cookies()
 	for _, cookie := range cookies {
-		if cookie.Name == s.SessionName &&
-			(s.Domain == "" || s.Domain == cookie.Domain) &&
-			(s.Path == "" || s.Path == cookie.Path) &&
-			s.HTTPOnly == cookie.HttpOnly &&
-			s.Secure == cookie.Secure {
+		if cookie.Name == s.cookie.Name &&
+			(s.cookie.Domain == "" || s.cookie.Domain == cookie.Domain) &&
+			(s.cookie.Path == "" || s.cookie.Path == cookie.Path) &&
+			s.cookie.HttpOnly == cookie.HttpOnly &&
+			s.cookie.Secure == cookie.Secure {
 			return cookie.Value
 		}
 	}
@@ -67,9 +67,11 @@ func (s *store) setData(w http.ResponseWriter, data string) {
 	w.Header().Add("Set-Cookie", cookie.String())
 }
 
+type optFunc func(s *store)
+
 func newStore(os ...optFunc) *store {
 	s := new(store)
-	s.SessionName = "session"
+	s.cookie.Name = "session"
 	for _, o := range os {
 		o(s)
 	}
