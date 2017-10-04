@@ -34,7 +34,7 @@ func Secure() optFunc {
 	}
 }
 
-func Expiry(d time.Duration) {
+func Expiry(d time.Duration) optFunc {
 	return func(s *store) {
 		s.expires = d
 	}
