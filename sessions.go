@@ -16,8 +16,7 @@ type store struct {
 }
 
 func (s *store) GetData(r *http.Request) string {
-	cookies := r.Cookies()
-	for _, cookie := range cookies {
+	for _, cookie := range r.Cookies() {
 		if cookie.Name == s.cookie.Name &&
 			(s.cookie.Domain == "" || s.cookie.Domain == cookie.Domain) &&
 			(s.cookie.Path == "" || s.cookie.Path == cookie.Path) &&
