@@ -1,6 +1,7 @@
 package sessions
 
 import (
+	"encoding/base64"
 	"net/http"
 	"time"
 
@@ -68,15 +69,19 @@ func NewCookieStore(encKey []byte, opts ...optFunc) (*CookieStore, error) {
 }
 
 func (c *CookieStore) Get(r *http.Request) []byte {
-	data, _ := c.codec.Decode(c.store.GetData(r))
-	return data
+	data, err := base64.StdEncoding.DecodeString(c.store.GetData(r))
+	if err != nil || len(data) < 12 {
+		return nil
+	}
+	dst, _ := c.codec.Decode(data, make([]byte, 0, len(data)))
+	return dst
 }
 
 func (c *CookieStore) Set(w http.ResponseWriter, data []byte) {
 	if len(data) == 0 {
 		c.store.RemoveData(w)
 	} else {
-		c.store.SetData(w, c.codec.Encode(data))
+		c.store.SetData(w, base64.StdEncoding.EncodeToString(c.codec.Encode(data, make([]byte, len(data)+c.codec.Overhead()))))
 	}
 }
 
