@@ -51,14 +51,16 @@ func (s *store) Init(opts ...optFunc) {
 
 type CookieStore struct {
 	store store
-	codec codec
+	codec Codec
 }
 
 func NewCookieStore(encKey []byte, opts ...optFunc) (*CookieStore, error) {
 	c := new(CookieStore)
 	c.store.Init(opts...)
-	if err := c.codec.Init(encKey, c.store.expires); err != nil {
+	if cd, err := NewCodec(encKey, c.store.expires); err != nil {
 		return nil, err
+	} else {
+		c.codec = *cd
 	}
 	return c, nil
 }
