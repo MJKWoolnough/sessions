@@ -3,6 +3,8 @@ package sessions
 import (
 	"net/http"
 	"time"
+
+	"github.com/MJKWoolnough/authenticate"
 )
 
 type Store interface {
@@ -51,13 +53,13 @@ func (s *store) Init(opts ...optFunc) {
 
 type CookieStore struct {
 	store store
-	codec Codec
+	codec authenticate.Codec
 }
 
 func NewCookieStore(encKey []byte, opts ...optFunc) (*CookieStore, error) {
 	c := new(CookieStore)
 	c.store.Init(opts...)
-	if cd, err := NewCodec(encKey, c.store.expires); err != nil {
+	if cd, err := authenticate.NewCodec(encKey, c.store.expires); err != nil {
 		return nil, err
 	} else {
 		c.codec = *cd
