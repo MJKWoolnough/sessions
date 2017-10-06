@@ -73,7 +73,7 @@ func (c *CookieStore) Get(r *http.Request) []byte {
 	if err != nil || len(data) < 12 {
 		return nil
 	}
-	dst, _ := c.codec.Decode(data, make([]byte, 0, len(data)))
+	dst, _ := c.codec.Decode(data, nil)
 	return dst
 }
 
@@ -81,7 +81,7 @@ func (c *CookieStore) Set(w http.ResponseWriter, data []byte) {
 	if len(data) == 0 {
 		c.store.RemoveData(w)
 	} else {
-		c.store.SetData(w, base64.StdEncoding.EncodeToString(c.codec.Encode(data, make([]byte, len(data)+c.codec.Overhead()))))
+		c.store.SetData(w, base64.StdEncoding.EncodeToString(c.codec.Encode(data, nil)))
 	}
 }
 
