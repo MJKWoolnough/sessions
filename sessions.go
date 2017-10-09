@@ -1,3 +1,4 @@
+// Package session is used to store session information for a web server
 package sessions
 
 import (
@@ -8,6 +9,7 @@ import (
 	"github.com/MJKWoolnough/authenticate"
 )
 
+// Store is the interface for any stores in this package
 type Store interface {
 	Get(*http.Request) []byte
 	Set(http.ResponseWriter, []byte)
@@ -52,22 +54,25 @@ func (s *store) Init(opts ...optFunc) {
 	}
 }
 
+// CookieStore stores and retrieves authenticated data from a clients cookies
 type CookieStore struct {
 	store store
 	codec authenticate.Codec
 }
 
+// NewCookieStore creates a new CookieStore and initialises it.
+// The options optFunc's are to set non-default values on the cookie.
 func NewCookieStore(encKey []byte, opts ...optFunc) (*CookieStore, error) {
 	c := new(CookieStore)
 	c.store.Init(opts...)
 	if cd, err := authenticate.NewCodec(encKey, c.store.expires); err != nil {
 		return nil, err
-	} else {
-		c.codec = *cd
 	}
+	c.codec = *cd
 	return c, nil
 }
 
+// Get retrieves authenticated data from the cookie
 func (c *CookieStore) Get(r *http.Request) []byte {
 	data, err := base64.StdEncoding.DecodeString(c.store.GetData(r))
 	if err != nil || len(data) < 12 {
@@ -77,6 +82,7 @@ func (c *CookieStore) Get(r *http.Request) []byte {
 	return dst
 }
 
+// Set stores authenticated data in a clients cookies
 func (c *CookieStore) Set(w http.ResponseWriter, data []byte) {
 	if len(data) == 0 {
 		c.store.RemoveData(w)
