@@ -65,7 +65,8 @@ type CookieStore struct {
 func NewCookieStore(encKey []byte, opts ...optFunc) (*CookieStore, error) {
 	c := new(CookieStore)
 	c.store.Init(opts...)
-	if cd, err := authenticate.NewCodec(encKey, c.store.expires); err != nil {
+	cd, err := authenticate.NewCodec(encKey, c.store.expires)
+	if err != nil {
 		return nil, err
 	}
 	c.codec = *cd
