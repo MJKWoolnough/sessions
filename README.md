@@ -2,7 +2,7 @@
 --
     import "github.com/MJKWoolnough/sessions"
 
-Package session is used to store session information for a web server
+Package sessions is used to store session information for a web server
 
 ## Usage
 
