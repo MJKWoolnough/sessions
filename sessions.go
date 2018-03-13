@@ -25,7 +25,6 @@ func (s *store) GetData(r *http.Request) string {
 		if cookie.Name == s.cookie.Name &&
 			(s.cookie.Domain == "" || s.cookie.Domain == cookie.Domain) &&
 			(s.cookie.Path == "" || s.cookie.Path == cookie.Path) &&
-			s.cookie.HttpOnly == cookie.HttpOnly &&
 			s.cookie.Secure == cookie.Secure {
 			return cookie.Value
 		}
