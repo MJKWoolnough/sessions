@@ -1,12 +1,12 @@
 // Package sessions is used to store session information for a web server
-package sessions
+package sessions // import "vimagination.zapto.org/sessions"
 
 import (
 	"encoding/base64"
 	"net/http"
 	"time"
 
-	"github.com/MJKWoolnough/authenticate"
+	"vimagination.zapto.org/authenticate"
 )
 
 // Store is the interface for any stores in this package
