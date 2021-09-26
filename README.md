@@ -1,6 +1,6 @@
 # sessions
 --
-    import "github.com/MJKWoolnough/sessions"
+    import "vimagination.zapto.org/sessions"
 
 Package sessions is used to store session information for a web server
 
