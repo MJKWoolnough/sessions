@@ -98,15 +98,3 @@ func (c *CookieStore) Set(w http.ResponseWriter, data []byte) {
 		c.store.SetData(w, base64.StdEncoding.EncodeToString(c.codec.Encode(data, nil)))
 	}
 }
-
-/*
-type FSStore struct {
-	store
-	path string
-}
-
-type MemStore struct {
-	store
-	data sync.Map
-}
-*/
