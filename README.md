@@ -1,92 +1,65 @@
 # sessions
+
+[![CI](https://github.com/MJKWoolnough/sessions/actions/workflows/go-checks.yml/badge.svg)](https://github.com/MJKWoolnough/sessions/actions)
+[![Go Reference](https://pkg.go.dev/badge/vimagination.zapto.org/sessions.svg)](https://pkg.go.dev/vimagination.zapto.org/sessions)
+[![Go Report Card](https://goreportcard.com/badge/vimagination.zapto.org/sessions)](https://goreportcard.com/report/vimagination.zapto.org/sessions)
+
 --
     import "vimagination.zapto.org/sessions"
 
-Package sessions is used to store session information for a web server
+Package sessions is used to store session information for a web server.
+
+## Highlights
+
+ - Set and get session data in client cookies.
+ - Session data is signed and dated to prevent tampering.
 
 ## Usage
 
-#### func  Domain
-
 ```go
-func Domain(domain string) optFunc
-```
-Domain sets the optional domain for the cookie.
+package main
 
-#### func  Expiry
+import (
+	"fmt"
+	"net/http"
+	"net/http/httptest"
+	"time"
 
-```go
-func Expiry(d time.Duration) optFunc
-```
-Expiry sets a maximum time that a cookie and authenticated message are valid
-for.
+	"vimagination.zapto.org/sessions"
+)
 
-#### func  HTTPOnly
+func main() {
+	store, err := sessions.NewCookieStore([]byte("!THIS IS MY KEY!"), sessions.Expiry(time.Second))
+	if err != nil {
+		fmt.Println(err)
 
-```go
-func HTTPOnly() optFunc
-```
-HTTPOnly sets the httponly flag on the cookie.
+		return
+	}
 
-#### func  Name
+	w := httptest.NewRecorder()
 
-```go
-func Name(name string) optFunc
-```
-Name sets the cookie name.
+	store.Set(w, []byte("MY_DATA"))
 
-#### func  Path
+	r := httptest.NewRequest(http.MethodGet, "http://example.com", nil)
 
-```go
-func Path(path string) optFunc
-```
-Path sets the optional path for the cookie.
+	for _, cookie := range w.Result().Cookies() {
+		r.AddCookie(cookie)
+	}
 
-#### func  Secure
+	fmt.Printf("%q\n", store.Get(r))
 
-```go
-func Secure() optFunc
-```
-Secure sets the secure flag on the cookie.
+	time.Sleep(2 * time.Second)
 
-#### type CookieStore
+	fmt.Printf("%q\n", store.Get(r))
 
-```go
-type CookieStore struct {
+	// Output:
+	// "MY_DATA"
+	// ""
 }
 ```
 
-CookieStore stores and retrieves authenticated data from a clients cookies.
+## Documentation
 
-#### func  NewCookieStore
+Full API docs can be found at:
 
-```go
-func NewCookieStore(encKey []byte, opts ...optFunc) (*CookieStore, error)
-```
-NewCookieStore creates a new CookieStore and initialises it. The options
-optFunc's are to set non-default values on the cookie.
-
-#### func (*CookieStore) Get
-
-```go
-func (c *CookieStore) Get(r *http.Request) []byte
-```
-Get retrieves authenticated data from the cookie.
-
-#### func (*CookieStore) Set
-
-```go
-func (c *CookieStore) Set(w http.ResponseWriter, data []byte)
-```
-Set stores authenticated data in a clients cookies.
-
-#### type Store
-
-```go
-type Store interface {
-	Get(*http.Request) []byte
-	Set(http.ResponseWriter, []byte)
-}
-```
-
-Store is the interface for any stores in this package.
+https://pkg.go.dev/vimagination.zapto.org/sessions
