@@ -1,6 +1,9 @@
 package sessions
 
-import "time"
+import (
+	"net/http"
+	"time"
+)
 
 type optFunc func(*store)
 
@@ -44,5 +47,12 @@ func Secure() optFunc {
 func Expiry(d time.Duration) optFunc {
 	return func(s *store) {
 		s.expires = d
+	}
+}
+
+// SameSite sets the SameSite flag on the cookie.
+func SameSite(ss http.SameSite) optFunc {
+	return func(s *store) {
+		s.cookie.SameSite = ss
 	}
 }
