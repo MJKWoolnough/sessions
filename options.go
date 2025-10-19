@@ -56,3 +56,10 @@ func SameSite(ss http.SameSite) optFunc {
 		s.cookie.SameSite = ss
 	}
 }
+
+// Sign causes the Encoder to sign the data, as opposed to encrypting it.
+func Sign() optFunc {
+	return func(s *store) {
+		s.sign = true
+	}
+}

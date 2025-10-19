@@ -18,6 +18,7 @@ type Store interface {
 type store struct {
 	cookie  http.Cookie
 	expires time.Duration
+	sign    bool
 }
 
 func (s *store) GetData(r *http.Request) string {
@@ -85,7 +86,13 @@ func (c *CookieStore) Get(r *http.Request) []byte {
 		return nil
 	}
 
-	dst, _ := c.codec.Decode(data, nil)
+	var dst []byte
+
+	if c.store.sign {
+		dst, _ = c.codec.Verify(data)
+	} else {
+		dst, _ = c.codec.Decode(data, nil)
+	}
 
 	return dst
 }
@@ -94,6 +101,8 @@ func (c *CookieStore) Get(r *http.Request) []byte {
 func (c *CookieStore) Set(w http.ResponseWriter, data []byte) {
 	if len(data) == 0 {
 		c.store.RemoveData(w)
+	} else if c.store.sign {
+		c.store.SetData(w, base64.StdEncoding.EncodeToString(c.codec.Sign(data, nil)))
 	} else {
 		c.store.SetData(w, base64.StdEncoding.EncodeToString(c.codec.Encode(data, nil)))
 	}
